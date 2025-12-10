@@ -380,15 +380,9 @@ Projet académique - ENSI
 
 ---
 
-## 📞 Support
-
-Pour toute question ou suggestion, contactez votre professeur ou l'équipe pédagogique de l'ENSI.
-
----
-
 ## 🎓 Contexte Académique
 
-Ce projet a été développé dans le cadre du cours d'**Entreprenariat** à l'**École Nationale des Sciences de l'Informatique**. Il démontre les compétences suivantes :
+Ce projet démontre les compétences suivantes :
 
 - Programmation en C
 - Structures de données
@@ -400,12 +394,3 @@ Ce projet a été développé dans le cadre du cours d'**Entreprenariat** à l'*
 
 ---
 
-## ⭐ Remerciements
-
-Merci à l'équipe pédagogique de l'ENSI pour l'encadrement et le soutien dans la réalisation de ce projet.
-
----
-
-**Date de dernière mise à jour** : Décembre 2024
-
-**Version** : 1.0.0
