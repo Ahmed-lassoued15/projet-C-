@@ -2,9 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <ctype.h>
 #ifdef _WIN32
 #include <windows.h>
 #endif
+
 
 typedef struct {
     int id;
@@ -19,12 +21,12 @@ typedef struct {
     char nom_client[100];
     int id_salle;
     char nom_salle[50];
-    char date[11];  
-    char heure_debut[6];  
-    char heure_fin[6];
+    char date[11];  // Format: YYYY-MM-DD
+    char heure_debut[6];  // Format: HH:MM
+    char heure_fin[6];    // Format: HH:MM
     int nombre_personnes;
     float tarif;
-    char statut[20];
+    char statut[20];  // "confirmée", "annulée", "en_attente"
 } Reservation;
 
 typedef struct {
@@ -44,7 +46,6 @@ Facture factures[500];
 int nb_salles = 0;
 int nb_reservations = 0;
 int nb_factures = 0;
-
 
 void clearScreen() {
     #ifdef _WIN32
@@ -98,6 +99,10 @@ void afficher_salles() {
         printf("└─────────────────────────────────────────────────────────────┘\n\n");
     }
 }
+void viderBuffer() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) {}
+    }
 
 void ajouter_salle() {
     clearScreen();
@@ -114,24 +119,63 @@ void ajouter_salle() {
     Salle nouvelle_salle;
     nouvelle_salle.id = nb_salles + 1;
     
-    printf("Nom de la salle: ");
+    do {
+    printf("Nom de la salle : ");
     scanf(" %[^\n]", nouvelle_salle.nom);
+
+    if (strlen(nouvelle_salle.nom) == 0)
+        printf("❌ Le nom ne doit pas être vide !\n");
+
+    } while (strlen(nouvelle_salle.nom) == 0);
+
     
-    printf("Capacité (nombre de personnes): ");
-    scanf("%d", &nouvelle_salle.capacite);
+
+    while (1) {
+    printf("Capacité (nombre de personnes) : ");
+    if (scanf("%d", &nouvelle_salle.capacite) != 1) {
+        printf("❌ Veuillez entrer un NOMBRE entier valide !\n");
+        viderBuffer();
+        continue;
+    }
+    if (nouvelle_salle.capacite <= 0) {
+        printf("❌ La capacité doit être > 0 !\n");
+        continue;
+    }
+    viderBuffer();
+    break;
+    }
     
-    printf("Tarif horaire (TND): ");
-    scanf("%f", &nouvelle_salle.tarif_horaire);
+    while (1) {
+    printf("Tarif horaire (TND) : ");
+    if (scanf("%f", &nouvelle_salle.tarif_horaire) != 1) {
+        printf("❌ Entrez un montant (ex: 12.5)\n");
+        viderBuffer();
+        continue;
+    }
+    if (nouvelle_salle.tarif_horaire <= 0) {
+        printf("❌ Le tarif doit être > 0\n");
+        continue;
+    }
+    viderBuffer();
+    break;
+    }
+
     
-    printf("Équipements (séparés par des virgules): ");
+    do {
+    printf("Équipements (séparés par des virgules) : ");
     scanf(" %[^\n]", nouvelle_salle.equipements);
-    
+
+    if (strlen(nouvelle_salle.equipements) == 0)
+        printf("❌ Vous devez saisir au moins un équipement !\n");
+
+    } while (strlen(nouvelle_salle.equipements) == 0);
     salles[nb_salles] = nouvelle_salle;
     nb_salles++;
     
     printf("\n✅ Salle ajoutée avec succès!\n");
     pause_screen();
 }
+
 int trouver_salle(const char *nom) {
     for (int i = 0; i < nb_salles; i++) {
         if (strcmp(salles[i].nom, nom) == 0) {
@@ -140,6 +184,7 @@ int trouver_salle(const char *nom) {
     }
     return -1;
 }
+
 
 int periodes_se_chevauchent(const char *debut1, const char *fin1, 
                             const char *debut2, const char *fin2) {
@@ -158,6 +203,7 @@ int periodes_se_chevauchent(const char *debut1, const char *fin1,
     return (min1d < min2f && min1f > min2d);
 }
 
+// Fonction pour vérifier la disponibilité d'une salle
 int verifier_disponibilite(const char *nom_salle, const char *date, 
                            const char *heure_debut, const char *heure_fin) {
     for (int i = 0; i < nb_reservations; i++) {
@@ -168,16 +214,86 @@ int verifier_disponibilite(const char *nom_salle, const char *date,
             if (periodes_se_chevauchent(heure_debut, heure_fin,
                                        reservations[i].heure_debut,
                                        reservations[i].heure_fin)) {
-                return 0;  
+                return 0;  // Pas disponible
             }
         }
     }
-    return 1; 
+    return 1;  // Disponible
 }
 
+// TÂCHE 3 : Calcul automatique du coût
 float calculer_cout(int index_salle, const char *heure_debut, const char *heure_fin) {
     float duree = calculer_duree(heure_debut, heure_fin);
     return duree * salles[index_salle].tarif_horaire;
+}
+
+
+int estBissextile(int annee) {
+    return (annee % 4 == 0 && (annee % 100 != 0 || annee % 400 == 0));
+}
+
+int dateValide(const char *date) {
+    if (strlen(date) != 10) return 0;
+    if (date[4] != '-' || date[7] != '-') return 0;
+
+    // Vérifier que les autres caractères sont des chiffres
+    for (int i = 0; i < 10; i++) {
+        if (i == 4 || i == 7) continue;
+        if (!isdigit(date[i])) return 0;
+    }
+
+    int annee = atoi(date);
+    int mois = atoi(date + 5);
+    int jour = atoi(date + 8);
+
+    if (mois < 1 || mois > 12) return 0;
+    if (jour < 1 || jour > 31) return 0;
+
+    // Mois avec 30 jours
+    if (mois == 4 || mois == 6 || mois == 9 || mois == 11) {
+        if (jour > 30) return 0;
+    }
+
+    // Février
+    if (mois == 2) {
+        if (estBissextile(annee)) {
+            if (jour > 29) return 0;
+        } else {
+            if (jour > 28) return 0;
+        }
+    }
+
+    return 1;
+}
+
+int heureValide(const char *heure) {
+    if (strlen(heure) != 5) return 0;
+    if (heure[2] != ':') return 0;
+
+    for (int i = 0; i < 5; i++) {
+        if (i == 2) continue;
+        if (!isdigit(heure[i])) return 0;
+    }
+
+    int hh = (heure[0] - '0') * 10 + (heure[1] - '0');
+    int mm = (heure[3] - '0') * 10 + (heure[4] - '0');
+
+    if (hh < 0 || hh > 23) return 0;
+    if (mm < 0 || mm > 59) return 0;
+
+    return 1;
+}
+void conv(float duree) {
+    int heures = (int)duree;              // Partie entière → heures
+    int minutes = (int)round((duree - heures) * 60);  // Partie décimale → minutes
+
+    // Correction si minutes = 60
+    if (minutes == 60) {
+        heures += 1;
+        minutes = 0;
+    }
+
+    printf("Durée: %d heures et %d minutes\n", heures, minutes);
 }
 
 void creer_reservation() {
@@ -201,9 +317,11 @@ void creer_reservation() {
     Reservation nouvelle_res;
     nouvelle_res.id = nb_reservations + 1;
     
+    // Saisie des informations
     printf("Nom du client: ");
     scanf(" %[^\n]", nouvelle_res.nom_client);
-   
+
+    // Afficher les salles disponibles
     printf("\nSalles disponibles:\n");
     for (int i = 0; i < nb_salles; i++) {
         printf("  %d. %s (Capacité: %d, Tarif: %.2f TND/h)\n", 
@@ -224,18 +342,56 @@ void creer_reservation() {
     nouvelle_res.id_salle = salles[index_salle].id;
     strcpy(nouvelle_res.nom_salle, salles[index_salle].nom);
     
+    do {
     printf("Date (YYYY-MM-DD): ");
-    scanf("%s", nouvelle_res.date);
+    scanf(" %s", nouvelle_res.date);
+
+    if (!dateValide(nouvelle_res.date)) {
+        printf("❌ Format invalide ! Exemple : 2025-12-31\n");
+    }
+    } while (!dateValide(nouvelle_res.date));
+
     
+    do {
     printf("Heure de début (HH:MM): ");
-    scanf("%s", nouvelle_res.heure_debut);
-    
+    scanf(" %s", nouvelle_res.heure_debut);
+
+    if (!heureValide(nouvelle_res.heure_debut)) {
+        printf("❌ Format heure invalide ! Exemple : 14:30\n");
+    }
+    } while (!heureValide(nouvelle_res.heure_debut));
+
+
+
+    do {
     printf("Heure de fin (HH:MM): ");
-    scanf("%s", nouvelle_res.heure_fin);
+    scanf(" %s", nouvelle_res.heure_fin);
+
+    if (!heureValide(nouvelle_res.heure_fin)) {
+        printf("❌ Format heure invalide ! Exemple : 16:00\n");
+    }
+    } while (!heureValide(nouvelle_res.heure_fin));
     
-    printf("Nombre de personnes: ");
-    scanf("%d", &nouvelle_res.nombre_personnes);
+    while (1) {
+    printf("Nombre de personnes : ");
+    if (scanf("%d", &nouvelle_res.nombre_personnes) != 1) {
+        printf("❌ Veuillez entrer un nombre valide !\n");
+        viderBuffer(); // effacer saisie invalide
+        continue;
+    }
+
+    if (nouvelle_res.nombre_personnes <= 0) {
+        printf("❌ Le nombre doit être supérieur à 0 !\n");
+        viderBuffer();
+        continue;
+    }
+
+    viderBuffer();
+    break;
+    }
+
     
+   
     if (nouvelle_res.nombre_personnes > salles[index_salle].capacite) {
         printf("\n❌ CAPACITÉ INSUFFISANTE!\n");
         printf("La salle %s a une capacité de %d personnes.\n", 
@@ -243,7 +399,8 @@ void creer_reservation() {
         pause_screen();
         return;
     }
-
+    
+    
     if (!verifier_disponibilite(nouvelle_res.nom_salle, nouvelle_res.date,
                                 nouvelle_res.heure_debut, nouvelle_res.heure_fin)) {
         printf("\n❌ CONFLIT DE RÉSERVATION!\n");
@@ -251,12 +408,14 @@ void creer_reservation() {
         pause_screen();
         return;
     }
-   
+    
+    // 3. Calculer automatiquement le coût
     nouvelle_res.tarif = calculer_cout(index_salle, nouvelle_res.heure_debut, 
                                        nouvelle_res.heure_fin);
     
     strcpy(nouvelle_res.statut, "confirmée");
     
+    // Ajouter la réservation
     reservations[nb_reservations] = nouvelle_res;
     nb_reservations++;
     
@@ -266,13 +425,14 @@ void creer_reservation() {
     printf("Salle: %s\n", nouvelle_res.nom_salle);
     printf("Date: %s\n", nouvelle_res.date);
     printf("Horaire: %s - %s\n", nouvelle_res.heure_debut, nouvelle_res.heure_fin);
-    printf("Durée: %.2f heures\n", calculer_duree(nouvelle_res.heure_debut, nouvelle_res.heure_fin));
+    conv(calculer_duree(nouvelle_res.heure_debut, nouvelle_res.heure_fin));
     printf("Coût total: %.2f TND\n", nouvelle_res.tarif);
     printf("═══════════════════════════════════════\n");
     
     pause_screen();
 }
 
+// Fonction pour afficher toutes les réservations
 void afficher_reservations() {
     clearScreen();
     printf("\n╔═══════════════════════════════════════════════════════════════╗\n");
@@ -300,6 +460,10 @@ void afficher_reservations() {
     
     pause_screen();
 }
+
+// ============================================================================
+// TÂCHE 4 : GÉNÉRATION DE FACTURES
+// ============================================================================
 
 void generer_facture() {
     clearScreen();
@@ -329,7 +493,8 @@ void generer_facture() {
     int id_res;
     printf("\nEntrez l'ID de la réservation: ");
     scanf("%d", &id_res);
-
+    
+    // Trouver la réservation
     int index = -1;
     for (int i = 0; i < nb_reservations; i++) {
         if (reservations[i].id == id_res) {
@@ -344,6 +509,7 @@ void generer_facture() {
         return;
     }
     
+    // Créer la facture
     Facture nouvelle_facture;
     nouvelle_facture.id = nb_factures + 1;
     sprintf(nouvelle_facture.numero, "FACT-%d", nouvelle_facture.id);
@@ -358,6 +524,7 @@ void generer_facture() {
     factures[nb_factures] = nouvelle_facture;
     nb_factures++;
     
+    // Afficher la facture
     printf("\n");
     printf("╔═══════════════════════════════════════════════════════════════╗\n");
     printf("║                         FACTURE                               ║\n");
@@ -377,6 +544,7 @@ void generer_facture() {
     pause_screen();
 }
 
+// Fonction pour afficher toutes les factures
 void afficher_factures() {
     clearScreen();
     printf("\n╔═══════════════════════════════════════════════════════════════╗\n");
@@ -404,6 +572,10 @@ void afficher_factures() {
     pause_screen();
 }
 
+// ============================================================================
+// TÂCHE 5 : MODULE DE STATISTIQUES
+// ============================================================================
+
 void afficher_statistiques() {
     clearScreen();
     printf("\n╔═══════════════════════════════════════════════════════════════╗\n");
@@ -415,7 +587,8 @@ void afficher_statistiques() {
         pause_screen();
         return;
     }
-
+    
+    // 1. Chiffre d'affaires par salle
     printf("📊 CHIFFRE D'AFFAIRES PAR SALLE\n");
     printf("═══════════════════════════════════════\n");
     
@@ -437,10 +610,11 @@ void afficher_statistiques() {
         }
     }
     
+    // 2. Nombre de réservations par mois
     printf("\n📅 RÉSERVATIONS PAR MOIS\n");
     printf("═══════════════════════════════════════\n");
     
-    char mois[50][8];
+    char mois[50][8];  // Format: YYYY-MM
     int count_mois[50] = {0};
     int nb_mois = 0;
     
@@ -468,7 +642,8 @@ void afficher_statistiques() {
     for (int i = 0; i < nb_mois; i++) {
         printf("  %s: %d réservations\n", mois[i], count_mois[i]);
     }
-  
+    
+    // 3. Salles les plus populaires
     printf("\n⭐ SALLES LES PLUS POPULAIRES\n");
     printf("═══════════════════════════════════════\n");
     
@@ -482,6 +657,7 @@ void afficher_statistiques() {
         }
     }
     
+    // Trier par popularité (tri à bulles simple)
     for (int i = 0; i < nb_salles - 1; i++) {
         for (int j = 0; j < nb_salles - i - 1; j++) {
             if (popularite[j] < popularite[j + 1]) {
@@ -490,6 +666,7 @@ void afficher_statistiques() {
                 popularite[j] = popularite[j + 1];
                 popularite[j + 1] = temp_pop;
                 
+                // Échanger les salles
                 Salle temp_salle = salles[j];
                 salles[j] = salles[j + 1];
                 salles[j + 1] = temp_salle;
@@ -506,14 +683,20 @@ void afficher_statistiques() {
     pause_screen();
 }
 
+// ============================================================================
+// TÂCHE 6 : PERSISTANCE DES DONNÉES (Sauvegarde dans des fichiers)
+// ============================================================================
+
 void sauvegarder_donnees() {
+    // Sauvegarder les salles
     FILE *f_salles = fopen("salles.dat", "wb");
     if (f_salles != NULL) {
         fwrite(&nb_salles, sizeof(int), 1, f_salles);
         fwrite(salles, sizeof(Salle), nb_salles, f_salles);
         fclose(f_salles);
     }
-
+    
+    // Sauvegarder les réservations
     FILE *f_res = fopen("reservations.dat", "wb");
     if (f_res != NULL) {
         fwrite(&nb_reservations, sizeof(int), 1, f_res);
@@ -521,6 +704,7 @@ void sauvegarder_donnees() {
         fclose(f_res);
     }
     
+    // Sauvegarder les factures
     FILE *f_fact = fopen("factures.dat", "wb");
     if (f_fact != NULL) {
         fwrite(&nb_factures, sizeof(int), 1, f_fact);
@@ -532,13 +716,15 @@ void sauvegarder_donnees() {
 }
 
 void charger_donnees() {
+    // Charger les salles
     FILE *f_salles = fopen("salles.dat", "rb");
     if (f_salles != NULL) {
         fread(&nb_salles, sizeof(int), 1, f_salles);
         fread(salles, sizeof(Salle), nb_salles, f_salles);
         fclose(f_salles);
     }
-
+    
+    // Charger les réservations
     FILE *f_res = fopen("reservations.dat", "rb");
     if (f_res != NULL) {
         fread(&nb_reservations, sizeof(int), 1, f_res);
@@ -554,6 +740,10 @@ void charger_donnees() {
         fclose(f_fact);
     }
 }
+
+// ============================================================================
+// MENU PRINCIPAL
+// ============================================================================
 
 void afficher_menu() {
     clearScreen();
@@ -594,7 +784,8 @@ void afficher_menu() {
     }
 int main() {
 int choix;
-
+    /* On configure la console Windows en UTF-8 pour afficher correctement
+       les caractères accentués et les bordures dessinnées. */
 #ifdef _WIN32
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
