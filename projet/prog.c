@@ -77,11 +77,6 @@ float calculer_duree(const char *heure_debut, const char *heure_fin) {
     return (float)(minutes_fin - minutes_debut) / 60.0;
 }
 
-// ============================================================================
-// TÂCHE 1 : GESTION DES SALLES
-// ============================================================================
-
-// Fonction pour afficher toutes les salles
 void afficher_salles() {
     clearScreen();
     printf("\n╔═══════════════════════════════════════════════════════════════╗\n");
@@ -104,7 +99,6 @@ void afficher_salles() {
     }
 }
 
-// Fonction pour ajouter une nouvelle salle
 void ajouter_salle() {
     clearScreen();
     printf("\n╔═══════════════════════════════════════════════════════════════╗\n");
@@ -364,7 +358,6 @@ void generer_facture() {
     factures[nb_factures] = nouvelle_facture;
     nb_factures++;
     
-    // Afficher la facture
     printf("\n");
     printf("╔═══════════════════════════════════════════════════════════════╗\n");
     printf("║                         FACTURE                               ║\n");
@@ -497,7 +490,6 @@ void afficher_statistiques() {
                 popularite[j] = popularite[j + 1];
                 popularite[j + 1] = temp_pop;
                 
-                // Échanger les salles
                 Salle temp_salle = salles[j];
                 salles[j] = salles[j + 1];
                 salles[j + 1] = temp_salle;
