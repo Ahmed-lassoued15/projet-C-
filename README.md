@@ -4,8 +4,9 @@
 
 Système complet de gestion de réservations pour salles de réunion avec système de facturation automatique. Solution idéale pour petites entreprises et espaces de coworking.
 
-**Projet réalisé dans le cadre des études à l'École Nationale des Sciences de l'Informatique (ENSI)**
-
+**Projet realisé par deux étudinats à l'École Nationale des Sciences de l'Informatique (ENSI):**
+- Ahmed yassine lassoued
+- Ali guedria
 ---
 
 ## ✨ Fonctionnalités Principales
