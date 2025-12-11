@@ -572,10 +572,6 @@ void afficher_factures() {
     pause_screen();
 }
 
-// ============================================================================
-// TÂCHE 5 : MODULE DE STATISTIQUES
-// ============================================================================
-
 void afficher_statistiques() {
     clearScreen();
     printf("\n╔═══════════════════════════════════════════════════════════════╗\n");
@@ -588,7 +584,6 @@ void afficher_statistiques() {
         return;
     }
     
-    // 1. Chiffre d'affaires par salle
     printf("📊 CHIFFRE D'AFFAIRES PAR SALLE\n");
     printf("═══════════════════════════════════════\n");
     
@@ -610,7 +605,6 @@ void afficher_statistiques() {
         }
     }
     
-    // 2. Nombre de réservations par mois
     printf("\n📅 RÉSERVATIONS PAR MOIS\n");
     printf("═══════════════════════════════════════\n");
     
@@ -643,7 +637,6 @@ void afficher_statistiques() {
         printf("  %s: %d réservations\n", mois[i], count_mois[i]);
     }
     
-    // 3. Salles les plus populaires
     printf("\n⭐ SALLES LES PLUS POPULAIRES\n");
     printf("═══════════════════════════════════════\n");
     
@@ -683,12 +676,8 @@ void afficher_statistiques() {
     pause_screen();
 }
 
-// ============================================================================
-// TÂCHE 6 : PERSISTANCE DES DONNÉES (Sauvegarde dans des fichiers)
-// ============================================================================
 
 void sauvegarder_donnees() {
-    // Sauvegarder les salles
     FILE *f_salles = fopen("salles.dat", "wb");
     if (f_salles != NULL) {
         fwrite(&nb_salles, sizeof(int), 1, f_salles);
@@ -696,15 +685,12 @@ void sauvegarder_donnees() {
         fclose(f_salles);
     }
     
-    // Sauvegarder les réservations
     FILE *f_res = fopen("reservations.dat", "wb");
     if (f_res != NULL) {
         fwrite(&nb_reservations, sizeof(int), 1, f_res);
         fwrite(reservations, sizeof(Reservation), nb_reservations, f_res);
         fclose(f_res);
     }
-    
-    // Sauvegarder les factures
     FILE *f_fact = fopen("factures.dat", "wb");
     if (f_fact != NULL) {
         fwrite(&nb_factures, sizeof(int), 1, f_fact);
@@ -716,7 +702,6 @@ void sauvegarder_donnees() {
 }
 
 void charger_donnees() {
-    // Charger les salles
     FILE *f_salles = fopen("salles.dat", "rb");
     if (f_salles != NULL) {
         fread(&nb_salles, sizeof(int), 1, f_salles);
@@ -724,7 +709,6 @@ void charger_donnees() {
         fclose(f_salles);
     }
     
-    // Charger les réservations
     FILE *f_res = fopen("reservations.dat", "rb");
     if (f_res != NULL) {
         fread(&nb_reservations, sizeof(int), 1, f_res);
@@ -740,10 +724,6 @@ void charger_donnees() {
         fclose(f_fact);
     }
 }
-
-// ============================================================================
-// MENU PRINCIPAL
-// ============================================================================
 
 void afficher_menu() {
     clearScreen();
@@ -784,8 +764,7 @@ void afficher_menu() {
     }
 int main() {
 int choix;
-    /* On configure la console Windows en UTF-8 pour afficher correctement
-       les caractères accentués et les bordures dessinnées. */
+    
 #ifdef _WIN32
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
