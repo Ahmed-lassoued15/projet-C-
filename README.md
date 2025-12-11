@@ -55,7 +55,7 @@ Système complet de gestion de réservations pour salles de réunion avec systè
 
 ## 🛠️ Technologies Utilisées
 
-- **Langage** : C (standard C99)
+- **Langage** : C 
 - **Structures de données** : Structures, tableaux statiques
 - **Bibliothèques** : 
   - `stdio.h` : entrées/sorties
